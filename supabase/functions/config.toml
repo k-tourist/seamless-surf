@@ -1,0 +1,6 @@
+
+project_id = "tykerrffdqepbgnpwjys"
+
+[functions.generate-with-claude]
+verify_jwt = true
+

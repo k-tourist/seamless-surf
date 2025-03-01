@@ -1,48 +1,85 @@
 
-import React, { useEffect } from 'react';
-import Header from '../components/Header';
-import Hero from '../components/Hero';
-import Features from '../components/Features';
-import Testimonials from '../components/Testimonials';
-import Newsletter from '../components/Newsletter';
-import Footer from '../components/Footer';
+import { useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
+import HeadlineGenerator from "@/components/HeadlineGenerator";
+import { useHeadlineGeneration } from "@/hooks/useHeadlineGeneration";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
-  // Smooth scroll to sections when clicking on navigation links
+  const [searchParams] = useSearchParams();
+  const { handleUrlSubmit, handleTextSubmit } = useHeadlineGeneration();
+  const { toast } = useToast();
+
   useEffect(() => {
-    const handleAnchorClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (target.tagName === 'A') {
-        const href = target.getAttribute('href');
-        if (href && href.startsWith('#')) {
-          e.preventDefault();
-          const element = document.querySelector(href);
-          if (element) {
-            window.scrollTo({
-              top: element.getBoundingClientRect().top + window.scrollY - 80,
-              behavior: 'smooth'
-            });
-          }
+    const authenticateWithApiKey = async (apiKey: string) => {
+      try {
+        console.log("Attempting to authenticate with API key");
+        
+        // First, find the user profile with this API key
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("api_key", apiKey)
+          .single();
+
+        if (profileError || !profile) {
+          console.error("Invalid API key");
+          toast({
+            title: "Authentication Error",
+            description: "Invalid API key provided",
+            variant: "destructive",
+          });
+          return;
         }
+
+        // Sign in as the authenticated user using a custom token
+        const { data: { session }, error: signInError } = await supabase.auth.signInWithPassword({
+          email: profile.id, // Using ID as the identifier
+          password: apiKey, // Using API key as the password
+        });
+        
+        if (signInError || !session) {
+          console.error("Error signing in:", signInError);
+          toast({
+            title: "Authentication Error",
+            description: "Failed to authenticate with provided API key",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        console.log("Successfully authenticated with API key");
+      } catch (error) {
+        console.error("Authentication error:", error);
+        toast({
+          title: "Error",
+          description: "An unexpected error occurred during authentication",
+          variant: "destructive",
+        });
       }
     };
 
-    document.addEventListener('click', handleAnchorClick);
-    return () => document.removeEventListener('click', handleAnchorClick);
-  }, []);
+    const processInput = async () => {
+      const apiKey = searchParams.get('key');
+      const urlParam = searchParams.get('url');
+      const textParam = searchParams.get('text');
 
-  return (
-    <>
-      <Header />
-      <main>
-        <Hero />
-        <Features />
-        <Testimonials />
-        <Newsletter />
-      </main>
-      <Footer />
-    </>
-  );
+      if (apiKey) {
+        await authenticateWithApiKey(apiKey);
+      }
+
+      if (urlParam) {
+        await handleUrlSubmit(decodeURIComponent(urlParam));
+      } else if (textParam) {
+        handleTextSubmit(decodeURIComponent(textParam));
+      }
+    };
+
+    processInput();
+  }, [searchParams, handleUrlSubmit, handleTextSubmit, toast]);
+
+  return <HeadlineGenerator />;
 };
 
 export default Index;
