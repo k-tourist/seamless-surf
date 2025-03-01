@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { Moon, Settings, Sun, LogOut } from "lucide-react";
+import { Moon, Settings, Sun, LogOut, Home } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -35,7 +35,7 @@ const HeaderSection = ({ isDarkMode, onThemeToggle }: HeaderSectionProps) => {
   return (
     <div className="flex justify-between items-center">
       <div className="flex items-center">
-        <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+        <Link to="/dashboard" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
           <img src="/lovable-uploads/dfb369e1-9663-40cb-aff5-a1cbc09fdb7e.png" alt="Logo" className="h-8 w-auto" />
           <span className="text-xl font-semibold text-white">Headline Studio</span>
         </Link>
@@ -45,7 +45,7 @@ const HeaderSection = ({ isDarkMode, onThemeToggle }: HeaderSectionProps) => {
           variant="ghost"
           size="icon"
           onClick={onThemeToggle}
-          className="text-white/60 bg-white/10"
+          className="text-white/60 bg-white/10 hover:bg-white/20 hover:text-white"
         >
           {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
         </Button>
